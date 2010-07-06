@@ -653,10 +653,11 @@ btQuantizedBvh.prototype.walkStacklessTreeAgainstRay=function(nodeCallback, rayS
     }
 
 	var bounds=[vec3.create(),vec3.create()];
-
+    var paramArray=[1.0];
 	while (curIndex < m_curNodeIndex)
 	{
 		var param = 1.0;
+        paramArray[0]=param;
 		//catch bugs in tree data
 		if (walkIterations >= this.m_curNodeIndex&&console){
             console.log ("Walk iterations of "+walkIterations+" should not be >= "+this.m_curNodeIndex);
@@ -675,12 +676,12 @@ btQuantizedBvh.prototype.walkStacklessTreeAgainstRay=function(nodeCallback, rayS
 			///careful with this check: need to check division by zero (above) and fix the unQuantize method
 			///thanks Joerg/hiker for the reproduction case!
 			///http://www.bulletphysics.com/Bullet/phpBB3/viewtopic.php?f=9&t=1858
-		    rayBoxOverlap = aabbOverlap ? btRayAabb2 (raySource, rayDirectionInverse, sign, bounds, param, 0.0, lambda_max) : false;
+		    rayBoxOverlap = aabbOverlap ? btRayAabb2 (raySource, rayDirectionInverse, sign, bounds, paramArray, 0.0, lambda_max) : false;
             
         }else {
             
 		    var normal=vec3.create();
-		    rayBoxOverlap = btRayAabb(raySource, rayTarget,bounds[0],bounds[1],param, normal);
+		    rayBoxOverlap = btRayAabb(raySource, rayTarget,bounds[0],bounds[1],paramArray, normal);
         }
 
 		isLeafNode = rootNode.m_escapeIndex == -1;
@@ -771,7 +772,7 @@ btQuantizedBvh.prototype.walkStacklessQuantizedTreeAgainstRay=function(nodeCallb
     var quantizedQueryAabbMax=vec3.create();
 	quantizeWithClamp(quantizedQueryAabbMin,rayAabbMin,0);
 	quantizeWithClamp(quantizedQueryAabbMax,rayAabbMax,1);
-
+    var paramArray=[1.0];
 	while (curIndex < endNodeIndex)
 	{
 
@@ -785,6 +786,7 @@ btQuantizedBvh.prototype.walkStacklessQuantizedTreeAgainstRay=function(nodeCallb
 		//PCK: unsigned instead of bool
 		// only interested if this is closer than any previous hit
 		var param = 1.0;
+        paramArray[0]=param;
 		rayBoxOverlap = 0;
 		boxBoxOverlap = testQuantizedAabbAgainstQuantizedAabb(quantizedQueryAabbMin,quantizedQueryAabbMax,rootNode.m_quantizedAabbMin,rootNode.m_quantizedAabbMax);
 		isLeafNode = rootNode.isLeafNode();
@@ -800,11 +802,11 @@ btQuantizedBvh.prototype.walkStacklessQuantizedTreeAgainstRay=function(nodeCallb
 			    ///http://www.bulletphysics.com/Bullet/phpBB3/viewtopic.php?f=9&t=1858
                 
 			    //BT_PROFILE("btRayAabb2");
-			    rayBoxOverlap = btRayAabb2 (raySource, rayDirection, sign, bounds, param, 0.0, lambda_max);
+			    rayBoxOverlap = btRayAabb2 (raySource, rayDirection, sign, bounds, paramArray, 0.0, lambda_max);
 			    
             }else {
                 
-			    rayBoxOverlap = btRayAabb(raySource, rayTarget, bounds[0], bounds[1], param, normal);//FIXME DRH this was set to "true" at all times... that does not seem rational
+			    rayBoxOverlap = btRayAabb(raySource, rayTarget, bounds[0], bounds[1], paramArray, normal);//FIXME DRH this was set to "true" at all times... that does not seem rational
             }
 		}
 		
