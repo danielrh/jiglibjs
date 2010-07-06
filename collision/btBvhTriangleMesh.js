@@ -36,7 +36,7 @@ btBvhTriangleMeshShape.prototype.refitTree=function(aabbMin,aabbMax) {
 };
 
 btBvhTriangleMeshShape.prototype.performRaycast=function(callback,raySource,rayTarget) {
-    function nodeOverlapCallback(nodeTriangleIndex) {
+    function nodeOverlapCallback(nodeSubpartIndex, nodeTriangleIndex) {
         var meshInterface=this.m_meshInterface;
         var indexArray=meshInterface.m_indexArray;
         var vertexArray=meshInterface.m_vertexArray;
@@ -55,6 +55,7 @@ btBvhTriangleMeshShape.prototype.performRaycast=function(callback,raySource,rayT
                  vertexArray[index2]*scale[0],
                  vertexArray[index2+1]*scale[1],
                  vertexArray[index2+2]*scale[2],
+                 nodeSubpartIndex,
                  nodeTriangleIndex);
     }
     this.m_bvh.reportRayOverlappingNodex(nodeOverlapCallback,
@@ -67,7 +68,7 @@ btBvhTriangleMeshShape.prototype.performRaycast=function(callback,raySource,rayT
 
 btBvhTriangleMeshShape.prototype.performConvexcast=function (callback, boxSource, boxTarget, aabbMin, aabbMax)
 {
-    function nodeOverlapCallback(nodeTriangleIndex) {
+    function nodeOverlapCallback(nodeSubpartIndex, nodeTriangleIndex) {
         var meshInterface=this.m_meshInterface;
         var indexArray=meshInterface.m_indexArray;
         var vertexArray=meshInterface.m_vertexArray;
@@ -86,6 +87,7 @@ btBvhTriangleMeshShape.prototype.performConvexcast=function (callback, boxSource
                  vertexArray[index2]*scale[0],
                  vertexArray[index2+1]*scale[1],
                  vertexArray[index2+2]*scale[2],
+                 nodeSubpartIndex,
                  nodeTriangleIndex);
     }
     this.m_bvh.reportBoxCastOverlappingNodex(nodeOverlapCallback,
@@ -98,7 +100,7 @@ btBvhTriangleMeshShape.prototype.performConvexcast=function (callback, boxSource
 
 btBvhTriangleMeshShape.prototype.processAllTriangles=function(callback,aabbMin,aabbMax) 
 {
-    function nodeOverlapCallback(nodeTriangleIndex) {
+    function nodeOverlapCallback(nodeSubpartIndex,nodeTriangleIndex) {
         var meshInterface=this.m_meshInterface;
         var indexArray=meshInterface.m_indexArray;
         var vertexArray=meshInterface.m_vertexArray;
@@ -117,6 +119,7 @@ btBvhTriangleMeshShape.prototype.processAllTriangles=function(callback,aabbMin,a
                  vertexArray[index2]*scale[0],
                  vertexArray[index2+1]*scale[1],
                  vertexArray[index2+2]*scale[2],
+                 nodeSubpartIndex,
                  nodeTriangleIndex);
     }
 

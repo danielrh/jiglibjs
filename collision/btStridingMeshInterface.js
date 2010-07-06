@@ -40,6 +40,13 @@ function btStridingMeshInterface(scale,vertexArray,vertexStride,indexStride,inde
      */
     this.m_indexStride=indexStride?indexStride:3;
 }
+btStridingMeshInterface.getIndexArray=function(subPartId) {
+    return this.m_indexArray;
+};
+btStridingMeshInterface.getVertexArray=function(subPartId) {
+    return this.m_vertexArray;
+};
+btStridingMeshInterface.unLockReadOnlyVertexBase=function(subPartId){};
 
 btStridingMeshInterface.InternalProcessAllTriangles=function(callback,aabbMin,aabbMax){
     var len=this.m_indexArray.length-stride+1;
@@ -58,6 +65,7 @@ btStridingMeshInterface.InternalProcessAllTriangles=function(callback,aabbMin,aa
                 vertexArray[indexArray[i+2]*vStride]*scale[0], 
                 vertexArray[indexArray[i+2]*vStride+1]*scale[1], 
                 vertexArray[indexArray[i+2]*vStride+2]*scale[2], 
+                0,
                 i);
     }
 };
@@ -91,7 +99,7 @@ btStridingMeshInterface.calculateAabbBruteForce=function(aabbMin,aabbMax){
     }
 };
 
-btStridingMeshInterface.seScaling=function(scaling) {
+btStridingMeshInterface.setScaling=function(scaling) {
     this.m_scaling=scaling;
 };
 btStridingMeshInterface.getScaling=function() {

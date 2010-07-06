@@ -55,9 +55,9 @@ btTriangleMeshShape.prototype.recalcLocalAabb=function()
  * @param {Array} aabbMax max vec3 for triangles under consideration
  */
 btTriangleMeshShape.prototype.processAllTriangles=function(callback,aabbMin,aabbMax) {
-    function internalProcessTriangleIndex(ax,ay,az,bx,by,bz,cx,cy,cz,index){
+    function internalProcessTriangleIndex(ax,ay,az,bx,by,bz,cx,cy,cz,subPart,index){
         if (TestTriangleAgainstAabb2(ax,ay,az,bx,by,bz,cx,cy,cz,aabbMin,aabbMax)){
-            callback(ax,ay,az,bx,by,bz,cx,cy,cz,index);
+            callback(ax,ay,az,bx,by,bz,cx,cy,cz,subPart,index);
         }
     }
     this.m_meshInterface.InternalProcessAlltriangles(internalProcesstriangleIndex,aabbMin,aabbMax);
@@ -73,7 +73,7 @@ btTriangleMeshShape.prototype.calculateLocalInertia=function(mass,inertia) {
 btTriangleMeshShape.prototype.localGetSupportingVertex=function(vec) {
     var supportVertex=vec3.create();
     var maxDot=-BT_LARGE_FLOAT;
-    function supportCallback(ax,ay,az,bx,by,bz,cx,cy,cz,index) 
+    function supportCallback(ax,ay,az,bx,by,bz,cx,cy,cz,subPart,index) 
 {        var dot=vec[0]*ax+vec[1]*ay+vec[2]*az;
          if (dot>maxDot) {
              maxDot=dot;
