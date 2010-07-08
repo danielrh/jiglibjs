@@ -16,6 +16,7 @@ btQuantizedBvhNode.prototype.getTriangleIndex=function() {
 btQuantizedBvhNode.prototype.getPartId=function() {
     return (this.m_escapeIndexOrTriangleIndex>>21);
 };
+btQuantizedBvhNode.MAX_NUM_PARTS_IN_BITS=(31-21);
 
 function btOptimizedBvhNode () {
     this.m_aabbMinOrg=vec3.create();
@@ -34,14 +35,15 @@ function btBvhSubtreeInfo () {
 	this.m_rootNodeIndex=0;
 	this.m_subtreeSize=0;
 }
-btBvhSubtreeInfo.setAabbFromQuantizeNode=function(quantizedNode)
+btBvhSubtreeInfo.prototype.setAabbFromQuantizeNode=function(quantizedNode)
 	{
-		vec3.set(quantizedNode.m_quantizedAabbMin,m_quantizedAabbMin);
-		vec3.set(quantizedNode.m_quantizedAabbMax,m_quantizedAabbMax);
+		vec3.set(quantizedNode.m_quantizedAabbMin,this.m_quantizedAabbMin);
+		vec3.set(quantizedNode.m_quantizedAabbMax,this.m_quantizedAabbMax);
 	};
 
 
 function btQuantizedBvh() {
+    var SIMD_INFINITY=2.0*(1<<31)*2.0*(1<<31)*(1<<31);
     this.m_bvhAabbMin=vec3.create([-SIMD_INFINITY,-SIMD_INFINITY,-SIMD_INFINITY]);
     this.m_bvhAabbMax=vec3.create([SIMD_INFINITY,SIMD_INFINITY,SIMD_INFINITY]);
     this.m_bvhQuantization=vec3.create();
@@ -79,7 +81,7 @@ btQuantizedBvh.prototype.setInternalNodeAabbMax=function(nodeIndex,aabbMax)
 	{
 		if (this.m_useQuantization)
 		{
-			this.quantize(this.m_quantizedContiguousNodes[nodeIndex].m_quantizedAabbMax[0],aabbMax,1);
+			this.quantize(this.m_quantizedContiguousNodes[nodeIndex].m_quantizedAabbMax,aabbMax,1);
 		} else
 		{
 			this.m_contiguousNodes[nodeIndex].m_aabbMaxOrg = aabbMax;
@@ -90,7 +92,7 @@ btQuantizedBvh.prototype.getAabbMin=function(nodeIndex)
 	{
 		if (this.m_useQuantization)
 		{
-			return this.unQuantize(m_quantizedLeafNodes[nodeIndex].m_quantizedAabbMin);
+			return this.unQuantize(this.m_quantizedLeafNodes[nodeIndex].m_quantizedAabbMin);
 		}
 		//non-quantized
 		return m_leafNodes[nodeIndex].m_aabbMinOrg;
@@ -100,7 +102,7 @@ btQuantizedBvh.prototype.getAabbMax=function(nodeIndex)
 	{
 		if (this.m_useQuantization)
 		{
-			return this.unQuantize(m_quantizedLeafNodes[nodeIndex].m_quantizedAabbMax);
+			return this.unQuantize(this.m_quantizedLeafNodes[nodeIndex].m_quantizedAabbMax);
 		} 
 		//non-quantized
 		return m_leafNodes[nodeIndex].m_aabbMaxOrg;
@@ -110,13 +112,13 @@ btQuantizedBvh.prototype.getAabbMax=function(nodeIndex)
 	
 	btQuantizedBvh.prototype.setInternalNodeEscapeIndex=function(nodeIndex, escapeIndex)
 	{
-		if (m_useQuantization)
+		if (this.m_useQuantization)
 		{
-			m_quantizedContiguousNodes[nodeIndex].m_escapeIndexOrTriangleIndex = -escapeIndex;
+			this.m_quantizedContiguousNodes[nodeIndex].m_escapeIndexOrTriangleIndex = -escapeIndex;
 		} 
 		else
 		{
-			m_contiguousNodes[nodeIndex].m_escapeIndex = escapeIndex;
+			this.m_contiguousNodes[nodeIndex].m_escapeIndex = escapeIndex;
 		}
 
 	};
@@ -127,8 +129,8 @@ btQuantizedBvh.prototype.getAabbMax=function(nodeIndex)
 		{
 			var quantizedAabbMin=vec3.create();
 			var quantizedAabbMax=vec3.create();
-			quantize(quantizedAabbMin,newAabbMin,0);
-			quantize(quantizedAabbMax,newAabbMax,1);
+			this.quantize(quantizedAabbMin,newAabbMin,0);
+			this.quantize(quantizedAabbMax,newAabbMax,1);
 			for (var i=0;i<3;i++)
 			{
 				if (this.m_quantizedContiguousNodes[nodeIndex].m_quantizedAabbMin[i] > quantizedAabbMin[i])
@@ -155,7 +157,7 @@ btQuantizedBvh.prototype.getAabbMax=function(nodeIndex)
 btQuantizedBvh.prototype.quantize=function(out,point,isMax) {
     vec3.set(point,out);
 };
-btQuantizedBvh.prototype.quantizeWithClamp(out,point,isMax) {
+btQuantizedBvh.prototype.quantizeWithClamp=function(out,point,isMax) {
 
     vec3.set(point,out);
     for (var i=0;i<3;++i) {
@@ -236,12 +238,15 @@ btQuantizedBvh.prototype.buildInternal=function()
 
 btQuantizedBvh.prototype.setQuantizationValues=function(bvhAabbMin,bvhAabbMax,quantizationMargin)
 {
+    if (quantizationMargin===undefined) {
+        quantizationMargin=0.0;//FIXME was 1.0 in bullet
+    }
 	//enlarge the AABB to avoid division by zero when initializing the quantization values
 	var clampValue=vec3.create([quantizationMargin,quantizationMargin,quantizationMargin]);
-    vec3.sub(bvhAabbMin, clampValue,this.m_bvhAabbMin);
+    vec3.subtract(bvhAabbMin, clampValue,this.m_bvhAabbMin);
 	vec3.add(bvhAabbMax, clampValue,this.m_bvhAabbMax);
     var aabbSize=vec3.create();
-	vec3.sub(m_bvhAabbMax, m_bvhAabbMin,aabbSize);
+	vec3.subtract(this.m_bvhAabbMax, this.m_bvhAabbMin,aabbSize);
 	this.m_bvhQuantization = vec3.create([65533.0/aabbSize[0],65533.0/aabbSize[1],65533.0 / aabbSize[2]]);
 	this.m_useQuantization = true;
 };
@@ -257,9 +262,11 @@ btQuantizedBvh.prototype.buildTree=function(startIndex, endIndex)
     var splitIndex;
     var i;
 	var numIndices =endIndex-startIndex;
-	var curIndex = m_curNodeIndex;
+	var curIndex = this.m_curNodeIndex;
 
-	btAssert(numIndices>0);
+	if(numIndices<=0&&console){
+        console.log("Number of indices is less or equal to zero "+endIndex+"-"+startIndex+"="+numIndices);
+    }
 
 	if (numIndices==1)
 	{
@@ -275,7 +282,7 @@ btQuantizedBvh.prototype.buildTree=function(startIndex, endIndex)
 
 	splitIndex = this.sortAndCalcSplittingIndex(startIndex,endIndex,splitAxis);
 
-	var internalNodeIndex = m_curNodeIndex;
+	var internalNodeIndex = this.m_curNodeIndex;
 	
 	//set the min aabb to 'inf' or a max value, and set the max aabb to a -inf/minimum value.
 	//the aabb will be expanded during buildTree/mergeInternalNodeAabb with actual node values
@@ -369,7 +376,7 @@ btQuantizedBvh.prototype.sortAndCalcSplittingIndex=function(startIndex,endIndex,
     var center=vec3.create();
 	for (i=startIndex;i<endIndex;i++)
 	{
-        vec3.add(getAabbMax(i),getAabbMin(i),center);
+        vec3.add(this.getAabbMax(i),this.getAabbMin(i),center);
         vec3.scale(center,0.5);
 		vec3.add(means,center);
 	}
@@ -380,7 +387,7 @@ btQuantizedBvh.prototype.sortAndCalcSplittingIndex=function(startIndex,endIndex,
 	//sort leafNodes so all values larger then splitValue comes first, and smaller values start from 'splitIndex'.
 	for (i=startIndex;i<endIndex;i++)
 	{
-        vec3.add(getAabbMax(i),getAabbMin(i),center);
+        vec3.add(this.getAabbMax(i),this.getAabbMin(i),center);
         vec3.scale(center,0.5);
 		if (center[splitAxis] > splitValue)
 		{
@@ -426,7 +433,7 @@ btQuantizedBvh.prototype.calcSplittingAxis=function(startIndex,endIndex)
     var center=vec3.create();
 	for (i=startIndex;i<endIndex;i++)
 	{
-        vec3.add(getAabbMax(i),getAabbMin(i),center);
+        vec3.add(this.getAabbMax(i),this.getAabbMin(i),center);
         vec3.scale(center,0.5);
 		vec3.add(means,center);
 	}
@@ -434,15 +441,15 @@ btQuantizedBvh.prototype.calcSplittingAxis=function(startIndex,endIndex)
 		
 	for (i=startIndex;i<endIndex;i++)
 	{
-        vec3.add(getAabbMax(i),getAabbMin(i),center);
+        vec3.add(this.getAabbMax(i),this.getAabbMin(i),center);
         vec3.scale(center,0.5);
-        vec3.sub(center,means);
+        vec3.subtract(center,means);
 		center[0]*=center[0];
         center[1]*=center[1];
         center[2]*=center[2];
 		vec3.add(variance, center);
 	}
-	vec3.scale(variance, 1.(numIndices-1));
+	vec3.scale(variance, 1./(numIndices-1));
 	var maxaxis=0;
     if (variance[1]>variance[maxaxis])
         maxaxis=1;
@@ -568,7 +575,7 @@ void	btQuantizedBvh::walkTree(btOptimizedBvhNode* rootNode,btNodeOverlapCallback
  * @param {Float32Array} quantizedQueryAabbMin
  * @param {Float32Array} quantizedQueryAabbMax
  */
-void btQuantizedBvh::walkRecursiveQuantizedTreeAgainstQueryAabb=function(currentNodeIndex,nodeCallback,quantizedQueryAabbMin,quantizedQueryAabbMax)
+btQuantizedBvh.prototype.walkRecursiveQuantizedTreeAgainstQueryAabb=function(currentNodeIndex,nodeCallback,quantizedQueryAabbMin,quantizedQueryAabbMax)
 {
 	if ((!this.m_useQuantization)&&console){
         console.log("Walk recursive quantized tree called with non quantized bvh");
@@ -641,7 +648,7 @@ btQuantizedBvh.prototype.walkStacklessTreeAgainstRay=function(nodeCallback, rayS
     if (RAYAABB2) {
    
 	    rayDir = vec3.create();
-        vec3.sub(rayTarget,raySource,rayDir);
+        vec3.subtract(rayTarget,raySource,rayDir);
 	    vec3.normalize(rayDir);
 	    lambda_max = rayDir.dot(rayTarget-raySource);
 	    ///what about division by zero? --> just set rayDirection[i] to 1.0
@@ -665,8 +672,8 @@ btQuantizedBvh.prototype.walkStacklessTreeAgainstRay=function(nodeCallback, rayS
 
 		walkIterations++;
 
-		vec3.sub(rootNode.m_aabbMinOrg,aabbMax,bounds[0]);
-        vec3.sub(rootNode.m_aabbMaxOrg,aabbMin,bounds[1]);
+		vec3.subtract(rootNode.m_aabbMinOrg,aabbMax,bounds[0]);
+        vec3.subtract(rootNode.m_aabbMaxOrg,aabbMin,bounds[1]);
 
 		aabbOverlap = TestAabbAgainstAabb2(rayAabbMin,rayAabbMax,rootNode.m_aabbMinOrg,rootNode.m_aabbMaxOrg);
 		//perhaps profile if it is worth doing the aabbOverlap test first
@@ -744,7 +751,7 @@ btQuantizedBvh.prototype.walkStacklessQuantizedTreeAgainstRay=function(nodeCallb
     var sign;
     if(RAYAABB2) {
         var rayDelta=vec3.create();
-        vec3.sub(rayTarget,raySource,rayDelta);
+        vec3.subtract(rayTarget,raySource,rayDelta);
 	    vec3.scale(rayDelta,vec3.length(rayDelta),rayDirection);
 	    lambda_max = vec3.dot(rayDirection,rayDelta);
 	///what about division by zero? --> just set rayDirection[i] to 1.0
@@ -770,8 +777,8 @@ btQuantizedBvh.prototype.walkStacklessQuantizedTreeAgainstRay=function(nodeCallb
 
 	var quantizedQueryAabbMin=vec3.create();
     var quantizedQueryAabbMax=vec3.create();
-	quantizeWithClamp(quantizedQueryAabbMin,rayAabbMin,0);
-	quantizeWithClamp(quantizedQueryAabbMax,rayAabbMax,1);
+	this.quantizeWithClamp(quantizedQueryAabbMin,rayAabbMin,0);
+	this.quantizeWithClamp(quantizedQueryAabbMax,rayAabbMax,1);
     var paramArray=[1.0];
 	while (curIndex < endNodeIndex)
 	{
@@ -793,8 +800,8 @@ btQuantizedBvh.prototype.walkStacklessQuantizedTreeAgainstRay=function(nodeCallb
 		if (boxBoxOverlap)
 		{
 			var bounds=[vec3.create(),vec3.create()];
-			vec3.sub(this.unQuantize(rootNode.m_quantizedAabbMin),aabbMax,bounds[0]);
-			vec3.sub(this.unQuantize(rootNode.m_quantizedAabbMax),aabbMin,bounds[1]);
+			vec3.subtract(this.unQuantize(rootNode.m_quantizedAabbMin),aabbMax,bounds[0]);
+			vec3.subtract(this.unQuantize(rootNode.m_quantizedAabbMax),aabbMin,bounds[1]);
 			var normal=vec3.create();
             if (RAYAABB2) {    
 			    ///careful with this check: need to check division by zero (above) and fix the unQuantize method
@@ -950,7 +957,7 @@ btQuantizedBvh.prototype.swapLeafNodes=function(i, splitIndex)
 {
 	if (this.m_useQuantization)
 	{
-			var tmp = m_quantizedLeafNodes[i];
+			var tmp = this.m_quantizedLeafNodes[i];
 			this.m_quantizedLeafNodes[i] = this.m_quantizedLeafNodes[splitIndex];
 			this.m_quantizedLeafNodes[splitIndex] = tmp;
 	} else

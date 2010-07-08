@@ -1,12 +1,14 @@
+var BT_LARGE_FLOAT=(1<<31);
+
 /**
  * @param {!btStridingMeshInterface} meshInterface 
  */
 function btTriangleMeshShape (meshInterface){
     this.m_meshInterface=meshInterface;
     this.m_localAabbMin=vec3.create([BT_LARGE_FLOAT,BT_LARGE_FLOAT,BT_LARGE_FLOAT]);
-    this.m_localAabbMin=vec3.create([-BT_LARGE_FLOAT,-BT_LARGE_FLOAT,-BT_LARGE_FLOAT]);
+    this.m_localAabbMax=vec3.create([-BT_LARGE_FLOAT,-BT_LARGE_FLOAT,-BT_LARGE_FLOAT]);
     if (meshInterface.hasPremadeAabb()){
-        meshInterface.getPremadeAabb(m_localAabbMin,m_localAabbMax);
+        meshInterface.getPremadeAabb(this.m_localAabbMin,this.m_localAabbMax);
     }else {
         this.recalcLocalAabb();
     }
@@ -96,10 +98,10 @@ btTriangleMeshShape.prototype.localGetSupportingVertex=function(vec) {
              supportVertex[2]=cz;
          }
     }
-    this.aabbMax=vec3.create([BT_LARGE_FLOAT,BT_LARGE_FLOAT,BT_LARGE_FLOAT]);//includes everything, so bypass processAllTriangles with bbox check
-    this.aabbMin=vec3.create([-BT_LARGE_FLOAT,-BT_LARGE_FLOAT,-BT_LARGE_FLOAT]);
+    var aabbMax=vec3.create([BT_LARGE_FLOAT,BT_LARGE_FLOAT,BT_LARGE_FLOAT]);//includes everything, so bypass processAllTriangles with bbox check
+    var aabbMin=vec3.create([-BT_LARGE_FLOAT,-BT_LARGE_FLOAT,-BT_LARGE_FLOAT]);
 
-    this.m_meshInterface.InternalProcessAlltriangles(supportCallback,aabbMin,aabbMax);
+    this.m_meshInterface.InternalProcessAllTriangles(supportCallback,aabbMin,aabbMax);
     return supportVertex;
 };
 btTriangleMeshShape.prototype.setLocalScaling=function(scaling) {

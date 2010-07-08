@@ -17,8 +17,8 @@ function btOptimizedBvh(){
     btQuantizedBvh.call(this);
 }
 
-for (var btQuantizedFunction in btQuantizedBvh){
-    btOptimizedBvh.prototype[btQuantizedFunction]=btQuantizedBvh[btQUantizedFunction];
+for (var btQuantizedFunction in btQuantizedBvh.prototype){
+    btOptimizedBvh.prototype[btQuantizedFunction]=btQuantizedBvh.prototype[btQuantizedFunction];
 }
 
 
@@ -75,10 +75,10 @@ btOptimizedBvh.prototype.build=function(triangles, useQuantizedAabbCompression, 
 	function QuantizedNodeTriangleCallback(ax,ay,az,bx,by,bz,cx,cy,cz,partId,triangleIndex)
 	{
 			// The partId and triangle index must fit in the same (positive) integer
-			if(partId >= (1<<MAX_NUM_PARTS_IN_BITS)&&console){
+			if(partId >= (1<<btQuantizedBvhNode.MAX_NUM_PARTS_IN_BITS)&&console){
                 console.log("Part Id "+partId+" out of bounds of quantized integers");
             }
-			if(triangleIndex >= (1<<(31-MAX_NUM_PARTS_IN_BITS))&&console){
+			if(triangleIndex >= (1<<(31-btQuantizedBvhNode.MAX_NUM_PARTS_IN_BITS))&&console){
                 console.log("Part Id "+triangleIndes+" out of bounds of quantized integers");
             }
 			//negative indices are reserved for escapeIndex
@@ -133,10 +133,10 @@ btOptimizedBvh.prototype.build=function(triangles, useQuantizedAabbCompression, 
 				aabbMin[2]=aabbMin[2] - MIN_AABB_HALF_DIMENSION;
 			}
 
-			thus.quantize(node.m_quantizedAabbMin[0],aabbMin,0);
-			thus.quantize(node.m_quantizedAabbMax[0],aabbMax,1);
+			thus.quantize(node.m_quantizedAabbMin,aabbMin,0);
+			thus.quantize(node.m_quantizedAabbMax,aabbMax,1);
 
-			node.m_escapeIndexOrTriangleIndex = (partId<<(31-MAX_NUM_PARTS_IN_BITS)) | triangleIndex;
+			node.m_escapeIndexOrTriangleIndex = (partId<<(31-btQuantizedBvhNode.MAX_NUM_PARTS_IN_BITS)) | triangleIndex;
 
 			thus.m_quantizedLeafNodes.push(node);
 		
@@ -157,12 +157,13 @@ btOptimizedBvh.prototype.build=function(triangles, useQuantizedAabbCompression, 
 		triangles.InternalProcessAllTriangles(QuantizedNodeTriangleCallback,this.m_bvhAabbMin,this.m_bvhAabbMax);
 
 		//now we have an array of leafnodes in m_leafNodes
-		numLeafNodes = this.m_quantizedLeafNodes.size();
+		numLeafNodes = this.m_quantizedLeafNodes.length;
 
 
 		this.m_quantizedContiguousNodes.length=2*numLeafNodes;
-
-
+        for (var i=0;i<2*numLeafNodes;++i){
+            this.m_quantizedContiguousNodes[i]=new btQuantizedBvhNode();    
+        }
 	} else
 	{
 
@@ -192,7 +193,7 @@ btOptimizedBvh.prototype.build=function(triangles, useQuantizedAabbCompression, 
 	}
 
 	//PCK: update the copy of the size
-	this.m_subtreeHeaderCount = m_SubtreeHeaders.size();
+	this.m_subtreeHeaderCount = this.m_SubtreeHeaders.length;
 
 	//PCK: clear m_quantizedLeafNodes and m_leafNodes, they are temporary
 	this.m_quantizedLeafNodes=[];

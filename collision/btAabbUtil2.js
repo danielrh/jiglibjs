@@ -136,15 +136,15 @@ function btRayAabb(rayFrom,
 					  param, normal) 
 {
 	var aabbHalfExtent = vec3.create();
-    vec3.sub(aabbMax,aabbMin,aabbHalfExtent);
+    vec3.subtract(aabbMax,aabbMin,aabbHalfExtent);
     vec3.scale(aabbHalfExtent,0.5);
     var aabbCenter=vec3.create();
 	vec3.add(aabbMax,aabbMin,aabbCenter);
     vec3.scale(aabbCenter,0.5);
     var source = vec3.create();
     var target = vec3.create();
-    vec3.sub(rayFrom,aabbCenter,source);
-    vec3.sub(rayTo,aabbCenter,target);
+    vec3.subtract(rayFrom,aabbCenter,source);
+    vec3.subtract(rayTo,aabbCenter,target);
 	var	sourceOutcode = btOutcode(source,aabbHalfExtent);
 	var targetOutcode = btOutcode(target,aabbHalfExtent);
 	if ((sourceOutcode & targetOutcode) == 0x0)
@@ -152,7 +152,7 @@ function btRayAabb(rayFrom,
 		var lambda_enter = 0.0;
 		var lambda_exit  = param[0];
 		var r = vec3.create();
-        vec3.sub(target, source,r);
+        vec3.subtract(target, source,r);
 		var i;
 		var	normSign = 1;
 		var hitNormal=vec3.create([0,0,0]);
@@ -181,7 +181,7 @@ function btRayAabb(rayFrom,
 				}
 				bit<<=1;
 			}
-			normSign = btScalar(-1.);
+			normSign = -1.0;
 		}
 		if (lambda_enter <= lambda_exit)
 		{
@@ -213,7 +213,7 @@ function btTransformAabb(halfExtents, margin, t, aabbMinOut, aabbMaxOut)
     mat4.multiplyVec3(t,center);
 	var extent = vec3.create();
     mat3.multiplyVec3(abs_b,halfExtentsWithMargin,extent);
-	vec3.sub(center,extent,aabbMinOut);
+	vec3.subtract(center,extent,aabbMinOut);
 	vec3.add(center,extent,aabbMaxOut);
 }
 

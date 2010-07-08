@@ -1,6 +1,6 @@
 var BT_TRIANGLE_MESH_SHAPE_PROXYTYPE=1025;
 function btBvhTriangleMeshShape (meshInterface, useQuantizedAabbCompression,bvhAabbMin,bvhAabbMax, buildBvh) {
-    btTriangleMeshShape(meshInterface);
+    btTriangleMeshShape.call(this,meshInterface);
     this.m_bvh=null;
     /**
      * @type {Array}
@@ -19,9 +19,12 @@ function btBvhTriangleMeshShape (meshInterface, useQuantizedAabbCompression,bvhA
      */
     this.m_bvh=null;
     if (buildBvh) {
-        this.m_bvh=btOptimizedBvh();
+        this.m_bvh=new btOptimizedBvh();
         this.m_bvh.build(meshInterface,useQuantizedAabbCompression,bvhAabbMin,bvhAabbMax);        
     }
+}
+for (var btTriangleMeshFunction in btTriangleMeshShape.prototype){
+    btBvhTriangleMeshShape.prototype[btTriangleMeshFunction]=btTriangleMeshShape.prototype[btTriangleMeshFunction];
 }
 
 btBvhTriangleMeshShape.prototype.partialRefitTree=function(aabbMin,aabbMax) {
@@ -36,8 +39,9 @@ btBvhTriangleMeshShape.prototype.refitTree=function(aabbMin,aabbMax) {
 };
 
 btBvhTriangleMeshShape.prototype.performRaycast=function(callback,raySource,rayTarget) {
+    var thus=this;
     function nodeOverlapCallback(nodeSubpartIndex, nodeTriangleIndex) {
-        var meshInterface=this.m_meshInterface;
+        var meshInterface=thus.m_meshInterface;
         var indexArray=meshInterface.m_indexArray;
         var vertexArray=meshInterface.m_vertexArray;
         var vertexStride=meshInterface.m_stride;
@@ -60,9 +64,7 @@ btBvhTriangleMeshShape.prototype.performRaycast=function(callback,raySource,rayT
     }
     this.m_bvh.reportRayOverlappingNodex(nodeOverlapCallback,
                                          raySource,
-                                         rayTarget,
-                                         aabbMin,
-                                         aabbMax);
+                                         rayTarget);
 };
 
 

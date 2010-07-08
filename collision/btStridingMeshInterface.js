@@ -6,7 +6,7 @@
  * @param {Float32Array} scale 3 vector of floats indicating scale in x y and z if missing, assumed 1
  * @param {UInt32Array} indexArray (optional) the indices that make up the mesh
  */
-function btStridingMeshInterface(scale,vertexArray,vertexStride,indexStride,indexArray) {
+function btStridingMeshInterface(scale,vertexArray,vertexStride,indexArray,indexStride) {
     /**
      *@type {Float32Array}
      */
@@ -38,19 +38,19 @@ function btStridingMeshInterface(scale,vertexArray,vertexStride,indexStride,inde
     /**
      * @type {number}
      */
-    this.m_indexStride=indexStride?indexStride:3;
+    this.m_indexStride=indexStride==undefined?indexStride:3;
 }
-btStridingMeshInterface.getIndexArray=function(subPartId) {
+btStridingMeshInterface.prototype.getIndexArray=function(subPartId) {
     return this.m_indexArray;
 };
-btStridingMeshInterface.getVertexArray=function(subPartId) {
+btStridingMeshInterface.prototype.getVertexArray=function(subPartId) {
     return this.m_vertexArray;
 };
-btStridingMeshInterface.unLockReadOnlyVertexBase=function(subPartId){};
+btStridingMeshInterface.prototype.unLockReadOnlyVertexBase=function(subPartId){};
 
-btStridingMeshInterface.InternalProcessAllTriangles=function(callback,aabbMin,aabbMax){
-    var len=this.m_indexArray.length-stride+1;
+btStridingMeshInterface.prototype.InternalProcessAllTriangles=function(callback,aabbMin,aabbMax){
     var stride=this.m_indexStride;
+    var len=this.m_indexArray.length-stride+1;
     var vertexArray=this.m_vertexArray;
     var indexArray=this.m_indexArray;
     var scale=this.m_scaling;
@@ -74,7 +74,7 @@ btStridingMeshInterface.InternalProcessAllTriangles=function(callback,aabbMin,aa
  * @param {Float32Array} aabbMin 
  * @param {Float32Array} aabbMax 
  */
-btStridingMeshInterface.calculateAabbBruteForce=function(aabbMin,aabbMax){
+btStridingMeshInterface.prototype.calculateAabbBruteForce=function(aabbMin,aabbMax){
     aabbMin[0]=BT_LARGE_FLOAT;
     aabbMax[0]=-BT_LARGE_FLOAT;
     aabbMin[1]=BT_LARGE_FLOAT;
@@ -82,8 +82,8 @@ btStridingMeshInterface.calculateAabbBruteForce=function(aabbMin,aabbMax){
     aabbMin[2]=BT_LARGE_FLOAT;
     aabbMax[2]=-BT_LARGE_FLOAT;
 
-    var len=this.m_indexArray.length-stride+1;
     var stride=this.m_indexStride;
+    var len=this.m_indexArray.length-stride+1;
     var vertexArray=this.m_vertexArray;
     var indexArray=this.m_indexArray;
     var scale=this.m_scaling;    
@@ -99,9 +99,16 @@ btStridingMeshInterface.calculateAabbBruteForce=function(aabbMin,aabbMax){
     }
 };
 
-btStridingMeshInterface.setScaling=function(scaling) {
+btStridingMeshInterface.prototype.setScaling=function(scaling) {
     this.m_scaling=scaling;
 };
-btStridingMeshInterface.getScaling=function() {
+btStridingMeshInterface.prototype.getScaling=function() {
     return this.m_scaling;
+};
+btStridingMeshInterface.prototype.getPremadeAabb=function(minaabb,maxaabb) {
+
+};
+
+btStridingMeshInterface.prototype.hasPremadeAabb=function() {
+    return false;
 };
