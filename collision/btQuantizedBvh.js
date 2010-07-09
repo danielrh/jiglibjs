@@ -415,7 +415,7 @@ btQuantizedBvh.prototype.sortAndCalcSplittingIndex=function(startIndex,endIndex,
 	}
 
 	var unbal = (splitIndex==startIndex) || (splitIndex == (endIndex));
-    if ((!unbal)&&console) {
+    if (unbal&&console) {
         console.log("Tree is unbalanced");
     }
 

@@ -1,4 +1,4 @@
-var BT_LARGE_FLOAT=(1<<31);
+var BT_LARGE_FLOAT=2147483647;
 
 /**
  * @param {!btStridingMeshInterface} meshInterface 

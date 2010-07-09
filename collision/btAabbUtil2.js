@@ -44,17 +44,17 @@ function TestAabbAgainstAabb2(aabbMin1, aabbMax1,
 	overlap = (aabbMin1[1] > aabbMax2[1] || aabbMax1[1] < aabbMin2[1]) ? false : overlap;
 	return overlap;
 }
+function btMin(a,b) {
+    return (a<b?a:b);
+}
+function btMax(a,b) {
+    return (a>b?a:b);
+}
 
 /// conservative test for overlap between triangle and aabb
 function TestTriangleAgainstAabb2(ax,ay,az,bx,by,bz,cx,cy,cz,
 									aabbMin, aabbMax)
 {
-    function btMin(a,b) {
-      return (a<b?a:b);
-    }
-    function btMax(a,b) {
-      return (a>b?a:b);
-    }
 	if (btMin(btMin(ax, bx), cx) > aabbMax[0]) return false;
 	if (btMax(btMax(ax, bx), cx) < aabbMin[0]) return false;
 

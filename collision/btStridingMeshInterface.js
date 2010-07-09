@@ -55,7 +55,8 @@ btStridingMeshInterface.prototype.InternalProcessAllTriangles=function(callback,
     var indexArray=this.m_indexArray;
     var scale=this.m_scaling;
     var vStride=this.m_vertexStride;
-    for (var i=0;i<len;i+=stride) {
+    var count=0;
+    for (var i=0;i<len;i+=stride,++count) {
        callback(vertexArray[indexArray[i]*vStride]*scale[0], 
                 vertexArray[indexArray[i]*vStride+1]*scale[1], 
                 vertexArray[indexArray[i]*vStride+2]*scale[2], 
@@ -66,7 +67,7 @@ btStridingMeshInterface.prototype.InternalProcessAllTriangles=function(callback,
                 vertexArray[indexArray[i+2]*vStride+1]*scale[1], 
                 vertexArray[indexArray[i+2]*vStride+2]*scale[2], 
                 0,
-                i);
+                count);
     }
 };
 

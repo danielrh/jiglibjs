@@ -44,11 +44,12 @@ btBvhTriangleMeshShape.prototype.performRaycast=function(callback,raySource,rayT
         var meshInterface=thus.m_meshInterface;
         var indexArray=meshInterface.m_indexArray;
         var vertexArray=meshInterface.m_vertexArray;
-        var vertexStride=meshInterface.m_stride;
+        var vertexStride=meshInterface.m_vertexStride;
         var scale=meshInterface.m_scaling;
-        var index0=indexArray[nodeTriangleIndex]*vertexStride;
-        var index1=indexArray[nodeTriangleIndex+1]*vertexStride;
-        var index2=indexArray[nodeTriangleIndex+2]*vertexStride;
+        var indexStride=meshInterface.m_indexStride;
+        var index0=indexArray[nodeTriangleIndex*indexStride]*vertexStride;
+        var index1=indexArray[nodeTriangleIndex*indexStride+1]*vertexStride;
+        var index2=indexArray[nodeTriangleIndex*indexStride+2]*vertexStride;
         
         callback(vertexArray[index0]*scale[0],
                  vertexArray[index0+1]*scale[1],
